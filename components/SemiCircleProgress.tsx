@@ -55,7 +55,7 @@ export default function SemiCircleProgress({
 
       <View style={styles.centerText}>
         {caption ? <Text style={styles.caption}>{caption}</Text> : null}
-        <Text style={styles.value}>{value}</Text>
+        <Text style={styles.value}>{value}%</Text>
         <Text style={styles.label}>{label}</Text>
       </View>
     </View>

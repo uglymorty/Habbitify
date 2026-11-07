@@ -92,7 +92,7 @@ export default function Index() {
           </View>
 
           <View style={styles.progressWrap}>
-            <SemiCircleProgress progress={0.82} value={10} label="days" caption="Progress" />
+            <SemiCircleProgress progress={0.82} value={82} label="for today" caption="Progress" />
           </View>
 
           <View style={styles.dateRow}>
