@@ -3,7 +3,8 @@ import { GlassView } from 'expo-glass-effect';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dropdown } from 'react-native-element-dropdown';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SemiCircleProgress from '../../../components/SemiCircleProgress';
 
@@ -21,16 +22,18 @@ const account: AccountProfile = {
 
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-const habits = [
-  { name: 'Привычка 1', checked: true },
-  { name: 'Привычка 2', checked: false },
-];
-
 export default function Index() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [hasPhotoLoadError, setHasPhotoLoadError] = useState(false);
+  const [isAddModalVisible, setAddModalVisible] = useState(false);
+  const [newHabitName, setNewHabitName] = useState('');
+  const [habits, setHabits] = useState([
+    { id: 1, name: 'Выпить 2 литра воды', category: 'health', checked: true },
+    { id: 2, name: 'Сходить в спортзал', category: 'sport', checked: false },
+  ]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const initials = `${account.firstName.trim().charAt(0)}${account.lastName.trim().charAt(0)}`.toLocaleUpperCase('ru-RU');
   const monthLabel = calendarMonth.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
   const monthStart = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
@@ -58,6 +61,33 @@ export default function Index() {
     setCalendarMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
     setCalendarVisible(true);
   };
+  const addHabit = () => {
+    const trimmedName = newHabitName.trim();
+    if(trimmedName==='') {
+      return;
+    }
+    const newHabit = { id: Date.now(), name: trimmedName, category: selectedCategory, checked: false };
+    setHabits((currentHabits) => [...currentHabits, newHabit]);
+    setNewHabitName('');
+    setAddModalVisible(false);
+  };
+
+  const categories = [
+    {label: 'Здоровье', value: 'health'},
+    {label: 'Спорт', value: 'sport'},
+    {label: 'Обучение', value: 'education'},
+    {label: 'Саморазвитие', value: 'self-development'},
+    {label: 'Другое', value: 'other'},
+  ];
+
+  const toggleHabit = (id: number) => {
+    setHabits((currentHabits) =>
+    currentHabits.map((habit) =>
+     habit.id === id ? {...habit, checked: !habit.checked}: habit))
+  };
+
+
+  
 
   return (
     <LinearGradient colors={['#f9d9d9', '#ebc0c4']} style={styles.gradient}>
@@ -92,7 +122,7 @@ export default function Index() {
           </View>
 
           <View style={styles.progressWrap}>
-            <SemiCircleProgress progress={0.82} value={82} label="for today" caption="Progress" />
+            <SemiCircleProgress progress={1} value={100} label="for today" caption="Progress" />
           </View>
 
           <View style={styles.dateRow}>
@@ -117,21 +147,28 @@ export default function Index() {
 
           <FlatList
             data={habits}
-            keyExtractor={(habit) => habit.name}
+            keyExtractor={(habit) => String(habit.id)}
             style={styles.list}
             renderItem={({ item: habit }) => (
               <View style={styles.habitCard}>
                 <Text style={styles.habitText}>{habit.name}</Text>
                 <View style={styles.checkWrap}>
-                  <View style={habit.checked ? styles.checkFilled : styles.checkEmpty}>
+                  <Pressable
+                    onPress={() => toggleHabit(habit.id)}
+                    style={habit.checked ? styles.checkFilled : styles.checkEmpty}
+                  >
                     {habit.checked ? <Text style={styles.checkMark}>✓</Text> : null}
-                  </View>
+                  </Pressable>
                 </View>
               </View>
             )}
           />
 
-          <TouchableOpacity style={styles.fab} activeOpacity={0.9}>
+          <TouchableOpacity 
+            style={styles.fab} 
+            activeOpacity={0.9}
+            onPress={() => setAddModalVisible(true)}
+            >
             <Text style={styles.fabText}>+</Text>
           </TouchableOpacity>
         </View>
@@ -144,7 +181,7 @@ export default function Index() {
         onRequestClose={() => setCalendarVisible(false)}
       >
         <View style={styles.modalBackdrop}>
-          <View style={styles.calendarModal}>
+          <View style={styles.backgroundModal}>
             <View style={styles.calendarHeader}>
               <Pressable
                 onPress={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1))}
@@ -215,6 +252,53 @@ export default function Index() {
               <Text style={styles.closeCalendarText}>Закрыть</Text>
             </Pressable>
           </View>
+        </View>
+      </Modal>
+
+      <Modal visible={isAddModalVisible} transparent animationType="fade" onRequestClose={() => setAddModalVisible(false)}>
+        <View style={styles.modalBackdrop}>
+            <View style={styles.backgroundModal}>
+                <Text style={styles.addModalTitle}>
+                   Новая привычка
+                </Text>
+                <TextInput
+                  placeholder="Введите привычку" 
+                  placeholderTextColor="#999"
+                  value={newHabitName}
+                  onChangeText={setNewHabitName}
+                  style={styles.habitInput}
+                />
+                <Dropdown
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={categories}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Выберите категорию"
+                  value={selectedCategory}
+                  onChange={item => {
+                    setSelectedCategory(item.value);
+                  }}
+                />
+                <View style={styles.addModalButtons}>
+                   <Pressable
+                    style={styles.closeCalendarButton}
+                    onPress={() => {
+                      setAddModalVisible(false);
+                      setNewHabitName('');
+                    }}
+                   >
+                     <Text style={styles.closeCalendarText}>Отмена</Text>
+                   </Pressable>
+                   <Pressable
+                     style={styles.addButton}
+                     onPress={addHabit}
+                   >
+                     <Text style={styles.addButtonText}>Добавить</Text>
+                   </Pressable>
+                </View>
+            </View>
         </View>
       </Modal>
     </LinearGradient>
@@ -315,7 +399,7 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: 'rgba(29,29,29,0.35)',
   },
-  calendarModal: {
+  backgroundModal: {
     width: '100%',
     maxWidth: 360,
     borderRadius: 24,
@@ -380,6 +464,7 @@ const styles = StyleSheet.create({
     color: '#b94f48',
     fontSize: 15,
     fontWeight: '600',
+    marginTop: -25
   },
   list: {
     marginTop: 8,
@@ -455,4 +540,56 @@ const styles = StyleSheet.create({
     lineHeight: 55,
     fontWeight: '300',
   },
+  addModalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1d1d1d',
+    marginBottom: 18,
+  },
+  habitInput: {
+    height: 52,
+    borderWidth: 1,
+    borderColor: '#e0c5c5',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: '#1d1d1d',
+    backgroundColor: '#ffffff',
+  },
+  addModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 12,
+  },
+  addButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#d9655c',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600'
+  },
+  dropdown: {
+    height: 50,
+    borderColor: '#e0c5c5',
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    marginTop: 15,
+    backgroundColor: '#ffffff',
+  },
+  placeholderStyle: {
+    fontSize: 16,
+    color: '#999',
+  },
+  selectedTextStyle: {
+    fontSize: 16,
+    color: '#1d1d1d',
+  }
 });
