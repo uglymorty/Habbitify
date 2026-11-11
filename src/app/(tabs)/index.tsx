@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AddHabitModal from '../../../components/AddHabitModal';
 import CalendarModal from '../../../components/CalendarModal';
 import HomeHeader from '../../../components/HomeHeader';
+import ListEmptyComponent from '../../../components/ListEmptyComponent';
 import SemiCircleProgress from '../../../components/SemiCircleProgress';
 import SwipeableHabitCard from '../../../components/SwipeableHabitCard';
 import categories from '../../../constants/categories';
@@ -150,6 +151,13 @@ export default function Index() {
                 onEdit={startEditHabit}
               />
             )}
+            ListEmptyComponent={
+              <ListEmptyComponent
+                 onAddHabit={openAddHabitModal}
+              />
+            }
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={habits.length > 0}
           />
 
           <TouchableOpacity 
