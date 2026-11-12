@@ -1,3 +1,4 @@
+import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 type CheckMarkerProps = {
@@ -6,15 +7,16 @@ type CheckMarkerProps = {
 };
 
 export default function CheckMarker({ checked, onPress }: CheckMarkerProps) {
+  console.log('3. CheckMarker:', checked);
   return (
     <Pressable
       onPress={onPress}
-      style={checked ? styles.checkFilled : styles.checkEmpty}
+      style={checked ? styles.checkFilled: styles.checkEmpty}
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
       accessibilityLabel="Отметить привычку выполненной"
     >
-      {checked ? <Text style={styles.checkMark}>✓</Text> : null}
+      {checked ? <Text style={styles.checkMark}>✓</Text>: null}
     </Pressable>
   );
 }

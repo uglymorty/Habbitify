@@ -1,17 +1,18 @@
 
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, {
-    cancelAnimation,
-    Extrapolation,
-    interpolate,
-    useAnimatedStyle,
-    useSharedValue,
-    withDelay,
-    withSpring,
-    withTiming,
-    type SharedValue,
+  cancelAnimation,
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import type { Habit } from '../types/habit';
 import HabitCard from './HabitCard';
@@ -29,6 +30,7 @@ type RightActionsProps = {
   deleteTranslateY: SharedValue<number>;
 
   habit: Habit;
+  checked: boolean;
 
   onDelete: (id: number) => void;
   onEdit: (habit: Habit) => void;
@@ -43,6 +45,7 @@ function RightActions({
   editTranslateY,
   deleteTranslateY,
   habit,
+  checked,
   onDelete,
   onEdit,
 }: RightActionsProps) {
@@ -143,6 +146,7 @@ function RightActions({
 
 type SwipeableHabitCardProps = {
   habit: Habit;
+  checked: boolean;
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
   onEdit: (habit: Habit) => void;
@@ -150,6 +154,7 @@ type SwipeableHabitCardProps = {
 
 export default function SwipeableHabitCard({
   habit,
+  checked,
   onToggle,
   onDelete,
   onEdit,
@@ -260,6 +265,7 @@ export default function SwipeableHabitCard({
           editTranslateY={editTranslateY}
           deleteTranslateY={deleteTranslateY}
           habit={habit}
+          checked={checked}
           onDelete={onDelete}
           onEdit={onEdit}
         />
@@ -273,6 +279,7 @@ export default function SwipeableHabitCard({
     >
       <HabitCard
         habit={habit}
+        checked={checked}
         onToggle={onToggle}
       />
     </ReanimatedSwipeable>

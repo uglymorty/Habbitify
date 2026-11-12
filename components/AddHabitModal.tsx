@@ -1,12 +1,14 @@
 import { Dropdown } from 'react-native-element-dropdown';
 
+import React from 'react';
 import {
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Keyboard,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
 type Category = {
@@ -39,57 +41,54 @@ export default function AddHabitModal({
 }: AddHabitModalProps) {
   return (
     <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
-    >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.backgroundModal}>
-          <Text style={styles.addModalTitle}>
-            {isEditing ? 'Редактировать привычку' : 'Новая привычка'}
+  visible={visible}
+  transparent
+  animationType="fade"
+  onRequestClose={onCancel}
+>
+  <Pressable
+    style={styles.modalBackdrop}
+    onPress={Keyboard.dismiss}
+  >
+    <View style={styles.backgroundModal}>
+      <Text style={styles.addModalTitle}>
+        {isEditing ? 'Редактировать привычку' : 'Новая привычка'}
+      </Text>
+
+      <TextInput
+        placeholder="Введите привычку"
+        placeholderTextColor="#999"
+        value={habitName}
+        onChangeText={onChangeName}
+        style={styles.habitInput}
+      />
+
+      <Dropdown
+        style={styles.dropdown}
+        placeholderStyle={styles.placeholderStyle}
+        selectedTextStyle={styles.selectedTextStyle}
+        data={categories}
+        labelField="label"
+        valueField="value"
+        placeholder="Выберите категорию"
+        value={selectedCategory}
+        onChange={(item) => onChangeCategory(item.value)}
+      />
+
+      <View style={styles.addModalButtons}>
+        <Pressable style={styles.cancelButton} onPress={onCancel}>
+          <Text style={styles.cancelButtonText}>Отмена</Text>
+        </Pressable>
+
+        <Pressable style={styles.addButton} onPress={onAdd}>
+          <Text style={styles.addButtonText}>
+            {isEditing ? 'Сохранить' : 'Добавить'}
           </Text>
-
-          <TextInput
-            placeholder="Введите привычку"
-            placeholderTextColor="#999"
-            value={habitName}
-            onChangeText={onChangeName}
-            style={styles.habitInput}
-          />
-
-          <Dropdown
-            style={styles.dropdown}
-            placeholderStyle={styles.placeholderStyle}
-            selectedTextStyle={styles.selectedTextStyle}
-            data={categories}
-            labelField="label"
-            valueField="value"
-            placeholder="Выберите категорию"
-            value={selectedCategory}
-            onChange={(item) => onChangeCategory(item.value)}
-          />
-
-          <View style={styles.addModalButtons}>
-            <Pressable
-              style={styles.cancelButton}
-              onPress={onCancel}
-            >
-              <Text style={styles.cancelButtonText}>Отмена</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.addButton}
-              onPress={onAdd}
-            >
-              <Text style={styles.addButtonText}>
-                {isEditing ? 'Сохранить' : 'Добавить'}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+        </Pressable>
       </View>
-    </Modal>
+    </View>
+  </Pressable>
+</Modal>
   );
 }
 

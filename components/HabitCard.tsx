@@ -1,13 +1,16 @@
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Habit } from '../types/habit';
 import CheckMarker from './CheckMarker';
 
 type HabitCardProps = {
   habit: Habit;
+  checked: boolean;
   onToggle: (id: number) => void;
 };
 
-export default function HabitCard({ habit, onToggle }: HabitCardProps) {
+export default function HabitCard(props: HabitCardProps) {
+  const {habit, checked, onToggle} = props;
   return (
     <View style={styles.habitCard}>
       <View style={styles.habitInfo}>
@@ -16,7 +19,7 @@ export default function HabitCard({ habit, onToggle }: HabitCardProps) {
 
       <View style={styles.checkWrap}>
         <CheckMarker
-          checked={habit.checked}
+          checked={checked}
           onPress={() => onToggle(habit.id)}
         />
       </View>

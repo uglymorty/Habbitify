@@ -1,11 +1,12 @@
 
 import {
-    StyleSheet,
-    Text,
-    View
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
 
 type ListEmptyComponentProps = {
   onAddHabit: () => void;
@@ -17,7 +18,6 @@ export default function ListEmptyComponent({
   return (
     <View style={styles.container}>
 
-      {/* Иконка */}
       <View style={styles.iconContainer}>
         <Ionicons
           name="book-outline"
@@ -26,12 +26,9 @@ export default function ListEmptyComponent({
         />
       </View>
 
-      {/* Заголовок */}
       <Text style={styles.title}>
         Пока здесь пусто
       </Text>
-
-      {/* Описание */}
       <Text style={styles.description}>
         У тебя пока нет привычек. 
         Нажмите на +, чтобы это исправить.
@@ -52,7 +49,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 110,
     height: 110,
-    borderRadius: 30,
+    borderRadius: 55,
     backgroundColor: '#EBD5D5',
     alignItems: 'center',
     justifyContent: 'center',

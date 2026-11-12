@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AddHabitModal from '../../../components/AddHabitModal';
@@ -30,9 +30,9 @@ export default function Index() {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [isAddModalVisible, setAddModalVisible] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
-  const [habits, setHabits] = useState([
-    { id: 1, name: 'Выпить 2 литра воды', category: 'health', checked: true },
-    { id: 2, name: 'Сходить в спортзал', category: 'sport', checked: false },
+  const [habits, setHabits] = useState<Habit[]>([
+    { id: 1, name: 'Выпить 2 литра воды', category: 'health', completedDates: []},
+    { id: 2, name: 'Сходить в спортзал', category: 'sport', completedDates: [] },
   ]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [editingHabitId, setEditingHabitId] = useState<number | null>(null);
@@ -73,7 +73,7 @@ export default function Index() {
       );
     }
     else {
-      const newHabit = { id: Date.now(), name: trimmedName, category: selectedCategory, checked: false };
+      const newHabit = { id: Date.now(), name: trimmedName, category: selectedCategory, completedDates: [] };
       setHabits((currentHabits) => [...currentHabits, newHabit]);
     }
     setNewHabitName('');
@@ -82,11 +82,48 @@ export default function Index() {
     setAddModalVisible(false);
   };
 
-  const toggleHabit = (id: number) => {
-    setHabits((currentHabits) =>
-    currentHabits.map((habit) =>
-     habit.id === id ? {...habit, checked: !habit.checked}: habit))
-  };
+const toggleHabit = (id: number) => {
+  console.log('----------------------');
+  console.log('Нажатие на привычку:', id);
+  console.log('Выбранная дата:', selectedDate);
+  console.log('Ключ выбранной даты:', selectedDateKey);
+  setHabits((prevHabits) =>
+    prevHabits.map((habit) => {
+      if (habit.id !== id) {
+        return habit;
+      }
+
+      const isCompleted = habit.completedDates.includes(selectedDateKey);
+
+      let updatedDates: string[];
+
+      if (isCompleted) {
+        // Если дата уже есть — убираем только её
+        updatedDates = habit.completedDates.filter(
+          (date) => date !== selectedDateKey
+        );
+      } else {
+        // Если даты нет — добавляем её, сохраняя остальные
+        updatedDates = [...habit.completedDates, selectedDateKey];
+      }
+
+      console.log('Старые даты:', habit.completedDates);
+      console.log('Новые даты:', updatedDates);
+
+      return {
+        ...habit,
+        completedDates: updatedDates,
+      };
+    })
+  );
+};
+  const getDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
 
   const deleteHabit = (id: number) => {
     setHabits((currentHabits) => currentHabits.filter((habit) => habit.id !== id));
@@ -99,8 +136,15 @@ export default function Index() {
     setAddModalVisible(true);
   };
 
-
+  const selectedDateKey = getDateKey(selectedDate);
+  const completedCount = habits.filter((habit) =>
+     habit.completedDates.includes(selectedDateKey)
+  ).length;
+  const progress = 
+    habits.length > 0
+      ? completedCount / habits.length : 0;
   
+  const progressPercent = Math.round(progress * 100);
 
   return (
     <LinearGradient colors={['#f9d9d9', '#ebc0c4']} style={styles.gradient}>
@@ -116,7 +160,7 @@ export default function Index() {
           />
 
           <View style={styles.progressWrap}>
-            <SemiCircleProgress progress={1} value={100} label="for today" caption="Progress" />
+            <SemiCircleProgress progress={progress} value={progressPercent} label="for today" caption="Progress" />
           </View>
 
           <View style={styles.dateRow}>
@@ -146,7 +190,8 @@ export default function Index() {
             renderItem={({ item: habit }) => (
               <SwipeableHabitCard
                 habit={habit}
-                onToggle={() => toggleHabit(habit.id)}
+                checked={habit.completedDates.includes(selectedDateKey)}
+                onToggle={toggleHabit}
                 onDelete={deleteHabit}
                 onEdit={startEditHabit}
               />
