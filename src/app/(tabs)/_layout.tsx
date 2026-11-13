@@ -1,4 +1,5 @@
 import { NativeTabs } from 'expo-router/native-tabs';
+import React from 'react';
 
 export default function TabLayout() {
   return (
