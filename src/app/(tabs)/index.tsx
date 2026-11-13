@@ -31,8 +31,8 @@ export default function Index() {
   const [isAddModalVisible, setAddModalVisible] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
   const [habits, setHabits] = useState<Habit[]>([
-    { id: 1, name: 'Выпить 2 литра воды', category: 'health', completedDates: []},
-    { id: 2, name: 'Сходить в спортзал', category: 'sport', completedDates: [] },
+    { id: 1, name: 'Выпить 2 литра воды', category: 'health', createdAt: '2026-11-10', completedDates: []},
+    { id: 2, name: 'Сходить в спортзал', category: 'sport', createdAt: '2026-11-10', completedDates: [] },
   ]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [editingHabitId, setEditingHabitId] = useState<number | null>(null);
@@ -58,35 +58,43 @@ export default function Index() {
     setAddModalVisible(true);
   }
   const addHabit = () => {
-    const trimmedName = newHabitName.trim();
-    if(trimmedName==='') {
-      return;
-    }
+  const trimmedName = newHabitName.trim();
 
-    if(editingHabitId !== null) {
-      setHabits((currentHabits) =>
-        currentHabits.map((habit) =>
-          habit.id === editingHabitId
-            ? { ...habit, name: trimmedName, category: selectedCategory }
-            : habit
-        )
-      );
-    }
-    else {
-      const newHabit = { id: Date.now(), name: trimmedName, category: selectedCategory, completedDates: [] };
-      setHabits((currentHabits) => [...currentHabits, newHabit]);
-    }
-    setNewHabitName('');
-    setSelectedCategory('');
-    setEditingHabitId(null);
-    setAddModalVisible(false);
-  };
+  if (trimmedName === '') {
+    return;
+  }
+
+  if (editingHabitId !== null) {
+    setHabits((currentHabits) =>
+      currentHabits.map((habit) =>
+        habit.id === editingHabitId
+          ? {
+              ...habit,
+              name: trimmedName,
+              category: selectedCategory,
+            }
+          : habit
+      )
+    );
+  } else {
+    const newHabit = {
+      id: Date.now(),
+      name: trimmedName,
+      category: selectedCategory,
+      createdAt: selectedDateKey,
+      completedDates: [],
+    };
+
+    setHabits((currentHabits) => [...currentHabits, newHabit]);
+  }
+
+  setNewHabitName('');
+  setSelectedCategory('');
+  setEditingHabitId(null);
+  setAddModalVisible(false);
+};
 
 const toggleHabit = (id: number) => {
-  console.log('----------------------');
-  console.log('Нажатие на привычку:', id);
-  console.log('Выбранная дата:', selectedDate);
-  console.log('Ключ выбранной даты:', selectedDateKey);
   setHabits((prevHabits) =>
     prevHabits.map((habit) => {
       if (habit.id !== id) {
@@ -98,17 +106,12 @@ const toggleHabit = (id: number) => {
       let updatedDates: string[];
 
       if (isCompleted) {
-        // Если дата уже есть — убираем только её
         updatedDates = habit.completedDates.filter(
           (date) => date !== selectedDateKey
         );
       } else {
-        // Если даты нет — добавляем её, сохраняя остальные
         updatedDates = [...habit.completedDates, selectedDateKey];
       }
-
-      console.log('Старые даты:', habit.completedDates);
-      console.log('Новые даты:', updatedDates);
 
       return {
         ...habit,
@@ -184,7 +187,7 @@ const toggleHabit = (id: number) => {
           </View>
 
           <FlatList
-            data={habits}
+            data={habits.filter((habit)=> habit.createdAt <= selectedDateKey)}
             keyExtractor={(habit) => String(habit.id)}
             style={styles.list}
             renderItem={({ item: habit }) => (
