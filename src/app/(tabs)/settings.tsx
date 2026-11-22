@@ -18,9 +18,6 @@ export default function SettingsScreen() {
       <View style={styles.content}>
 
         <Text style={styles.title}>Настройки</Text>
-        <Text style={styles.subtitle}>
-          Настрой приложение под себя
-        </Text>
         <Text style={styles.sectionTitle}>Внешний вид</Text>
 
         <View style={styles.settingCard}>
@@ -95,13 +92,6 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: '700',
     color: '#1d1d1d',
-  },
-
-  subtitle: {
-    fontSize: 15,
-    color: '#795e5e',
-    marginTop: 6,
-    marginBottom: 30,
   },
 
   sectionTitle: {
