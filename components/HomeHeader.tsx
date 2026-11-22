@@ -3,6 +3,7 @@ import { GlassView } from 'expo-glass-effect';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
 
 type HomeHeaderProps = {
   firstName: string;

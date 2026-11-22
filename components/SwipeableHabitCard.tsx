@@ -45,7 +45,6 @@ function RightActions({
   editTranslateY,
   deleteTranslateY,
   habit,
-  checked,
   onDelete,
   onEdit,
 }: RightActionsProps) {
@@ -150,6 +149,7 @@ type SwipeableHabitCardProps = {
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
   onEdit: (habit: Habit) => void;
+  onPressDetails: () => void;
 };
 
 export default function SwipeableHabitCard({
@@ -158,6 +158,7 @@ export default function SwipeableHabitCard({
   onToggle,
   onDelete,
   onEdit,
+  onPressDetails,
 }: SwipeableHabitCardProps) {
 
   const editScale = useSharedValue(0.7);
@@ -252,7 +253,6 @@ export default function SwipeableHabitCard({
     editTranslateY.value = 15;
     deleteTranslateY.value = 15;
   };
-  
   return (
     <ReanimatedSwipeable
       renderRightActions={(progress) => (
@@ -281,6 +281,7 @@ export default function SwipeableHabitCard({
         habit={habit}
         checked={checked}
         onToggle={onToggle}
+        onPressDetails={onPressDetails}
       />
     </ReanimatedSwipeable>
   );

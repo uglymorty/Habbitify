@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +10,8 @@ import ListEmptyComponent from '../../../components/ListEmptyComponent';
 import SemiCircleProgress from '../../../components/SemiCircleProgress';
 import SwipeableHabitCard from '../../../components/SwipeableHabitCard';
 import categories from '../../../constants/categories';
-import { Habit } from '../../../types/habit';
+import { Frequency, Habit } from '../../../types/habit';
+import { useHabits } from '../../context/HabitsContext';
 
 
 type AccountProfile = {
@@ -25,15 +27,17 @@ const account: AccountProfile = {
 };
 
 export default function Index() {
+  const [newHabitDescription, setNewHabitDescription] = useState('');
+  const [frequency, setFrequency] = useState<Frequency>('daily');
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  const [dayOfMonth, setDayOfMonth] = useState(1);
+  const [monthOfYear, setMonthOfYear] = useState(1);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [isAddModalVisible, setAddModalVisible] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
-  const [habits, setHabits] = useState<Habit[]>([
-    { id: 1, name: 'Выпить 2 литра воды', category: 'health', createdAt: '2026-11-10', completedDates: []},
-    { id: 2, name: 'Сходить в спортзал', category: 'sport', createdAt: '2026-11-10', completedDates: [] },
-  ]);
+  const {habits, setHabits} = useHabits();
   const [selectedCategory, setSelectedCategory] = useState('');
   const [editingHabitId, setEditingHabitId] = useState<number | null>(null);
   const selectedDateLabel = selectedDate.toLocaleDateString('ru-RU', {
@@ -51,12 +55,21 @@ export default function Index() {
     setCalendarVisible(true);
   };
 
+  
+
   const openAddHabitModal = () => {
-    setNewHabitName('');
-    setSelectedCategory('');
-    setEditingHabitId(null);
-    setAddModalVisible(true);
-  }
+  setNewHabitName('');
+  setSelectedCategory('');
+  setEditingHabitId(null);
+
+  setFrequency('daily');
+  setSelectedDays([]);
+  setDayOfMonth(1);
+  setMonthOfYear(1);
+  setNewHabitDescription('');
+
+  setAddModalVisible(true);
+};
   const addHabit = () => {
   const trimmedName = newHabitName.trim();
 
@@ -72,17 +85,27 @@ export default function Index() {
               ...habit,
               name: trimmedName,
               category: selectedCategory,
+              description: newHabitDescription.trim(),
+              frequency,
+              selectedDays,
+              dayOfMonth,
+              monthOfYear,
             }
           : habit
       )
     );
   } else {
-    const newHabit = {
+    const newHabit: Habit = {
       id: Date.now(),
       name: trimmedName,
       category: selectedCategory,
+      description: newHabitDescription.trim(),
       createdAt: selectedDateKey,
       completedDates: [],
+      frequency,
+      selectedDays,
+      dayOfMonth,
+      monthOfYear,
     };
 
     setHabits((currentHabits) => [...currentHabits, newHabit]);
@@ -91,7 +114,51 @@ export default function Index() {
   setNewHabitName('');
   setSelectedCategory('');
   setEditingHabitId(null);
+
+  setFrequency('daily');
+  setSelectedDays([]);
+  setDayOfMonth(1);
+  setMonthOfYear(1);
+
   setAddModalVisible(false);
+};
+
+const isHabitScheduled = (habit: Habit, date: Date) => {
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const weekDay = date.getDay();
+
+  switch (habit.frequency) {
+    case 'daily':
+      return true;
+
+    case 'weekly':
+      return habit.selectedDays?.includes(weekDay) ?? false;
+
+    case 'monthly': {
+      const lastDay = new Date(
+        date.getFullYear(),
+        date.getMonth() + 1,
+        0
+      ).getDate();
+
+      const targetDay = Math.min(
+        habit.dayOfMonth ?? 1,
+        lastDay
+      );
+
+      return day === targetDay;
+    }
+
+    case 'yearly':
+      return (
+        day === habit.dayOfMonth &&
+        month === habit.monthOfYear
+      );
+
+    default:
+      return false;
+  }
 };
 
 const toggleHabit = (id: number) => {
@@ -133,21 +200,33 @@ const toggleHabit = (id: number) => {
   };
 
   const startEditHabit = (habit: Habit) => {
-    setEditingHabitId(habit.id);
-    setNewHabitName(habit.name);
-    setSelectedCategory(habit.category);
-    setAddModalVisible(true);
-  };
+  setEditingHabitId(habit.id);
+  setNewHabitName(habit.name);
+  setSelectedCategory(habit.category);
+  setNewHabitDescription(habit.description ?? '');
+  setFrequency(habit.frequency);
+  setSelectedDays(habit.selectedDays ?? []);
+  setDayOfMonth(habit.dayOfMonth ?? 1);
+  setMonthOfYear(habit.monthOfYear ?? 1);
 
+  setAddModalVisible(true);
+};
+  
   const selectedDateKey = getDateKey(selectedDate);
-  const completedCount = habits.filter((habit) =>
+  const visibleHabits = habits.filter(
+  (habit) =>
+    habit.createdAt <= selectedDateKey &&
+    isHabitScheduled(habit, selectedDate)
+);
+  const completedCount = visibleHabits.filter((habit) =>
      habit.completedDates.includes(selectedDateKey)
   ).length;
   const progress = 
-    habits.length > 0
-      ? completedCount / habits.length : 0;
+    visibleHabits.length > 0
+      ? completedCount / visibleHabits.length : 0;
   
   const progressPercent = Math.round(progress * 100);
+  
 
   return (
     <LinearGradient colors={['#f9d9d9', '#ebc0c4']} style={styles.gradient}>
@@ -187,7 +266,7 @@ const toggleHabit = (id: number) => {
           </View>
 
           <FlatList
-            data={habits.filter((habit)=> habit.createdAt <= selectedDateKey)}
+            data={visibleHabits}
             keyExtractor={(habit) => String(habit.id)}
             style={styles.list}
             renderItem={({ item: habit }) => (
@@ -197,6 +276,12 @@ const toggleHabit = (id: number) => {
                 onToggle={toggleHabit}
                 onDelete={deleteHabit}
                 onEdit={startEditHabit}
+                onPressDetails={() =>
+                    router.push({
+                        pathname: '/habit/[id]',
+                        params: { id: String(habit.id) },
+                    })
+}
               />
             )}
             ListEmptyComponent={
@@ -205,7 +290,7 @@ const toggleHabit = (id: number) => {
               />
             }
             showsVerticalScrollIndicator={false}
-            scrollEnabled={habits.length > 0}
+            scrollEnabled={visibleHabits.length > 0}
           />
 
           <TouchableOpacity 
@@ -231,15 +316,28 @@ const toggleHabit = (id: number) => {
       />
 
       <AddHabitModal
-        visible={isAddModalVisible}
-        habitName={newHabitName}
-        selectedCategory={selectedCategory}
-        categories={categories}
+         visible={isAddModalVisible}
+         habitName={newHabitName}
+         selectedCategory={selectedCategory}
+         categories={categories}
+       
+         frequency={frequency}
+         selectedDays={selectedDays}
+         dayOfMonth={dayOfMonth}
+         monthOfYear={monthOfYear}
+
         onChangeName={setNewHabitName}
         onChangeCategory={setSelectedCategory}
+        onChangeFrequency={setFrequency}
+        onChangeSelectedDays={setSelectedDays}
+        onChangeDayOfMonth={setDayOfMonth}
+        onChangeMonthOfYear={setMonthOfYear}
+
         onAdd={addHabit}
         onCancel={() => setAddModalVisible(false)}
         isEditing={editingHabitId !== null}
+        description={newHabitDescription}
+        onChangeDescription={setNewHabitDescription}
       />
     </LinearGradient>
   );

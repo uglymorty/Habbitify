@@ -7,7 +7,6 @@ type CheckMarkerProps = {
 };
 
 export default function CheckMarker({ checked, onPress }: CheckMarkerProps) {
-  console.log('3. CheckMarker:', checked);
   return (
     <Pressable
       onPress={onPress}

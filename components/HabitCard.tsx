@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Habit } from '../types/habit';
 import CheckMarker from './CheckMarker';
 
@@ -7,15 +7,22 @@ type HabitCardProps = {
   habit: Habit;
   checked: boolean;
   onToggle: (id: number) => void;
+  onPressDetails: () => void;
 };
 
 export default function HabitCard(props: HabitCardProps) {
-  const {habit, checked, onToggle} = props;
+  const { habit, checked, onToggle, onPressDetails } = props;
+
   return (
     <View style={styles.habitCard}>
-      <View style={styles.habitInfo}>
-        <Text style={styles.habitText}>{habit.name}</Text>
-      </View>
+      <Pressable
+        style={styles.habitInfo}
+        onPress={onPressDetails}
+      >
+        <Text style={styles.habitText}>
+          {habit.name}
+        </Text>
+      </Pressable>
 
       <View style={styles.checkWrap}>
         <CheckMarker
@@ -26,7 +33,6 @@ export default function HabitCard(props: HabitCardProps) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   habitCard: {
     flexDirection: 'row',
@@ -48,6 +54,8 @@ const styles = StyleSheet.create({
 
   habitInfo: {
     flex: 1,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
   },
 
   habitText: {
