@@ -1,19 +1,17 @@
-
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useState,
-    type ReactNode,
-} from 'react';
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
-import { useSQLiteContext } from 'expo-sqlite';
+import { useSQLiteContext } from "expo-sqlite";
 
-import categories from '../../constants/categories';
-import type { Frequency, Habit } from '../../types/habit';
-
-const USER_ID = 1;
+import categories from "../../constants/categories";
+import type { Frequency, Habit } from "../../types/habit";
+import { useAuth } from "./AuthContext";
 
 type HabitInput = {
   name: string;
@@ -38,9 +36,7 @@ type HabitsContextType = {
   toggleHabit: (id: number, date: string) => Promise<void>;
 };
 
-const HabitsContext = createContext<HabitsContextType | undefined>(
-  undefined
-);
+const HabitsContext = createContext<HabitsContextType | undefined>(undefined);
 
 type HabitsProviderProps = {
   children: ReactNode;
@@ -48,39 +44,31 @@ type HabitsProviderProps = {
 
 export function HabitsProvider({ children }: HabitsProviderProps) {
   const db = useSQLiteContext();
+  const { user, loading: authLoading } = useAuth();
 
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Добавляем недостающие столбцы в существующую таблицу habits.
-  // Проверка нужна, чтобы ALTER TABLE не выполнялся повторно.
   const ensureHabitColumns = async () => {
     const columns = await db.getAllAsync<{ name: string }>(
-      'PRAGMA table_info(habits)'
+      "PRAGMA table_info(habits)",
     );
 
     const existingColumns = columns.map((column) => column.name);
 
-    if (!existingColumns.includes('selected_days')) {
-      await db.execAsync(
-        'ALTER TABLE habits ADD COLUMN selected_days TEXT'
-      );
+    if (!existingColumns.includes("selected_days")) {
+      await db.execAsync("ALTER TABLE habits ADD COLUMN selected_days TEXT");
     }
 
-    if (!existingColumns.includes('day_of_month')) {
-      await db.execAsync(
-        'ALTER TABLE habits ADD COLUMN day_of_month INTEGER'
-      );
+    if (!existingColumns.includes("day_of_month")) {
+      await db.execAsync("ALTER TABLE habits ADD COLUMN day_of_month INTEGER");
     }
 
-    if (!existingColumns.includes('month_of_year')) {
-      await db.execAsync(
-        'ALTER TABLE habits ADD COLUMN month_of_year INTEGER'
-      );
+    if (!existingColumns.includes("month_of_year")) {
+      await db.execAsync("ALTER TABLE habits ADD COLUMN month_of_year INTEGER");
     }
   };
 
-  // Проверяем и добавляем категории.
   const ensureCategories = async () => {
     for (const category of categories) {
       await db.runAsync(
@@ -90,42 +78,45 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
            SELECT 1 FROM categories WHERE name = ?
          )`,
         category.label,
-        '',
-        category.label
+        "",
+        category.label,
       );
     }
   };
 
   const getCategoryId = async (categoryValue: string) => {
     const selectedCategory = categories.find(
-      (item) => item.value === categoryValue
+      (item) => item.value === categoryValue,
     );
 
     if (!selectedCategory) {
-      throw new Error('Категория не найдена');
+      throw new Error("Категория не найдена");
     }
 
     await ensureCategories();
 
     const result = await db.getFirstAsync<{ id: number }>(
-      'SELECT id FROM categories WHERE name = ?',
-      selectedCategory.label
+      "SELECT id FROM categories WHERE name = ?",
+      selectedCategory.label,
     );
 
     if (!result) {
-      throw new Error('Категория отсутствует в базе данных');
+      throw new Error("Категория отсутствует в базе данных");
     }
 
     return result.id;
   };
 
-  // Получаем дату создания без учёта времени.
   const getCreatedDate = (createdAt: string) => {
     return new Date(`${createdAt.slice(0, 10)}T00:00:00`);
   };
 
-  // Загружаем привычки из SQLite.
   const loadHabits = useCallback(async () => {
+    if (!user) {
+      setHabits([]);
+      return;
+    }
+
     try {
       await ensureHabitColumns();
 
@@ -155,16 +146,13 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
           ON h.category_id = c.id
         WHERE h.user_id = ?
         ORDER BY h.id DESC`,
-        USER_ID
+        user.id,
       );
 
       const markers = await db.getAllAsync<{
         habit_id: number;
         marked_at: string;
-      }>(
-        'SELECT habit_id, marked_at FROM markers WHERE user_id = ?',
-        USER_ID
-      );
+      }>("SELECT habit_id, marked_at FROM markers WHERE user_id = ?", user.id);
 
       const loadedHabits: Habit[] = rows.map((row) => {
         const completedDates = markers
@@ -172,14 +160,12 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
           .map((marker) => marker.marked_at.slice(0, 10));
 
         const categoryValue =
-          categories.find(
-            (item) => item.label === row.category_name
-          )?.value ?? 'other';
+          categories.find((item) => item.label === row.category_name)?.value ??
+          "other";
 
         const createdAt = row.created_at.slice(0, 10);
         const createdDate = getCreatedDate(createdAt);
 
-        // Восстанавливаем выбранные дни недели.
         let selectedDays: number[];
 
         try {
@@ -193,48 +179,63 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
         return {
           id: row.id,
           name: row.habit_name,
-          description: row.description ?? '',
+          description: row.description ?? "",
           category: categoryValue,
           createdAt,
           completedDates,
           frequency: row.frequency_type as Frequency,
 
-          // Если расписание ещё не сохранено,
-          // используем дату создания привычки.
           selectedDays,
           dayOfMonth: row.day_of_month ?? createdDate.getDate(),
           monthOfYear: row.month_of_year ?? createdDate.getMonth() + 1,
         };
       });
-      console.log('Загруженные привычки:',JSON.stringify(loadedHabits, null, 2));
+      console.log(
+        "Загруженные привычки:",
+        JSON.stringify(loadedHabits, null, 2),
+      );
       setHabits(loadedHabits);
     } catch (error) {
-      console.error('Ошибка загрузки привычек:', error);
+      console.error("Ошибка загрузки привычек:", error);
       throw error;
     }
-  }, [db]);
+  }, [db, user]);
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    if (!user) {
+      setHabits([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
     const initialize = async () => {
       try {
         await ensureHabitColumns();
         await ensureCategories();
 
-        console.log('SQLite: структура БД проверена');
+        console.log("SQLite: структура БД проверена");
 
         await loadHabits();
       } catch (error) {
-        console.error('Ошибка инициализации контекста:', error);
+        console.error("Ошибка инициализации контекста:", error);
       } finally {
         setLoading(false);
       }
     };
 
     initialize();
-  }, [loadHabits]);
+  }, [loadHabits, authLoading, user]);
 
-  // Добавление привычки.
   const addHabit = async (data: HabitInput) => {
+    if (!user) {
+      throw new Error("Пользователь не авторизован");
+    }
     try {
       await ensureHabitColumns();
 
@@ -242,16 +243,11 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
 
       const createdDate = getCreatedDate(data.createdAt);
 
-      // Если расписание не передано из формы,
-      // используем дату создания привычки.
-      const selectedDays =
-        data.selectedDays ?? [createdDate.getDay()];
+      const selectedDays = data.selectedDays ?? [createdDate.getDay()];
 
-      const dayOfMonth =
-        data.dayOfMonth ?? createdDate.getDate();
+      const dayOfMonth = data.dayOfMonth ?? createdDate.getDate();
 
-      const monthOfYear =
-        data.monthOfYear ?? createdDate.getMonth() + 1;
+      const monthOfYear = data.monthOfYear ?? createdDate.getMonth() + 1;
 
       await db.runAsync(
         `INSERT INTO habits (
@@ -265,7 +261,7 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
           day_of_month,
           month_of_year
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        USER_ID,
+        user.id,
         data.name.trim(),
         data.description.trim(),
         data.createdAt,
@@ -273,32 +269,31 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
         data.frequency,
         JSON.stringify(selectedDays),
         dayOfMonth,
-        monthOfYear
+        monthOfYear,
       );
 
       await loadHabits();
     } catch (error) {
-      console.error('Ошибка добавления привычки:', error);
+      console.error("Ошибка добавления привычки:", error);
       throw error;
     }
   };
 
-  // Редактирование привычки.
   const updateHabit = async (id: number, data: HabitInput) => {
+    if (!user) {
+      throw new Error("Пользователь не авторизован");
+    }
     try {
       await ensureHabitColumns();
 
       const categoryId = await getCategoryId(data.category);
       const createdDate = getCreatedDate(data.createdAt);
 
-      const selectedDays =
-        data.selectedDays ?? [createdDate.getDay()];
+      const selectedDays = data.selectedDays ?? [createdDate.getDay()];
 
-      const dayOfMonth =
-        data.dayOfMonth ?? createdDate.getDate();
+      const dayOfMonth = data.dayOfMonth ?? createdDate.getDate();
 
-      const monthOfYear =
-        data.monthOfYear ?? createdDate.getMonth() + 1;
+      const monthOfYear = data.monthOfYear ?? createdDate.getMonth() + 1;
 
       await db.runAsync(
         `UPDATE habits
@@ -318,34 +313,38 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
         dayOfMonth,
         monthOfYear,
         id,
-        USER_ID
+        user.id,
       );
 
       await loadHabits();
     } catch (error) {
-      console.error('Ошибка редактирования привычки:', error);
+      console.error("Ошибка редактирования привычки:", error);
       throw error;
     }
   };
 
-  // Удаление привычки.
   const deleteHabit = async (id: number) => {
+    if (!user) {
+      throw new Error("Пользователь не авторизован");
+    }
     try {
       await db.runAsync(
-        'DELETE FROM habits WHERE id = ? AND user_id = ?',
+        "DELETE FROM habits WHERE id = ? AND user_id = ?",
         id,
-        USER_ID
+        user.id,
       );
 
       await loadHabits();
     } catch (error) {
-      console.error('Ошибка удаления привычки:', error);
+      console.error("Ошибка удаления привычки:", error);
       throw error;
     }
   };
 
-  // Установка или снятие отметки выполнения.
   const toggleHabit = async (id: number, date: string) => {
+    if (!user) {
+      throw new Error("Пользователь не авторизован");
+    }
     try {
       const existingMarker = await db.getFirstAsync<{
         habit_id: number;
@@ -356,8 +355,8 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
            AND user_id = ?
            AND marked_at = ?`,
         id,
-        USER_ID,
-        date
+        user.id,
+        date,
       );
 
       if (existingMarker) {
@@ -367,8 +366,8 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
              AND user_id = ?
              AND marked_at = ?`,
           id,
-          USER_ID,
-          date
+          user.id,
+          date,
         );
       } else {
         await db.runAsync(
@@ -377,15 +376,15 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
             habit_id,
             marked_at
           ) VALUES (?, ?, ?)`,
-          USER_ID,
+          user.id,
           id,
-          date
+          date,
         );
       }
 
       await loadHabits();
     } catch (error) {
-      console.error('Ошибка изменения отметки:', error);
+      console.error("Ошибка изменения отметки:", error);
       throw error;
     }
   };
@@ -411,9 +410,7 @@ export function useHabits() {
   const context = useContext(HabitsContext);
 
   if (!context) {
-    throw new Error(
-      'useHabits must be used inside HabitsProvider'
-    );
+    throw new Error("useHabits must be used inside HabitsProvider");
   }
 
   return context;

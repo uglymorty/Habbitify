@@ -1,7 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
-
 import {
   Alert,
   FlatList,
@@ -20,6 +19,7 @@ import SemiCircleProgress from "../../../components/SemiCircleProgress";
 import SwipeableHabitCard from "../../../components/SwipeableHabitCard";
 import categories from "../../../constants/categories";
 import type { Frequency, Habit } from "../../../types/habit";
+import { useAuth } from "../../context/AuthContext";
 import { useHabits } from "../../context/HabitsContext";
 
 type AccountProfile = {
@@ -43,6 +43,7 @@ const getDateKey = (date: Date) => {
 };
 
 export default function Index() {
+  const { logout } = useAuth();
   const context = useHabits();
   console.log("Habit context:", context);
   const { habits, addHabit, updateHabit, deleteHabit, toggleHabit } = context;
@@ -99,8 +100,6 @@ export default function Index() {
       return;
     }
 
-    // Для еженедельной привычки обязательно выбрать
-    // хотя бы один день недели.
     if (frequency === "weekly" && selectedDays.length === 0) {
       Alert.alert(
         "Выберите дни",
@@ -117,7 +116,6 @@ export default function Index() {
         createdAt: selectedDateKey,
         frequency,
 
-        // Параметры расписания
         selectedDays,
         dayOfMonth,
         monthOfYear,
@@ -129,7 +127,6 @@ export default function Index() {
         await addHabit(habitData);
       }
 
-      // Очищаем форму после сохранения
       setNewHabitName("");
       setNewHabitDescription("");
       setSelectedCategory("");
@@ -250,6 +247,7 @@ export default function Index() {
             lastName={account.lastName}
             photoUri={account.photoUri}
             onOpenCalendar={openCalendar}
+            onLogout={logout}
           />
           <View style={styles.progressWrap}>
             <SemiCircleProgress
