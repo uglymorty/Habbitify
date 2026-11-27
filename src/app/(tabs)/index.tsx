@@ -23,7 +23,6 @@ export default function Index() {
   const { user, logout } = useAuth();
   const { darkTheme, colors } = useTheme();
   const context = useHabits();
-  console.log("Habit context:", context);
   const { habits, addHabit, updateHabit, deleteHabit, toggleHabit } = context;
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitDescription, setNewHabitDescription] = useState("");
@@ -154,27 +153,6 @@ export default function Index() {
     const createdCondition = habit.createdAt <= selectedDateKey;
 
     const scheduledCondition = isHabitScheduled(habit, selectedDate);
-
-    console.log("Проверка привычки:", {
-      id: habit.id,
-      name: habit.name,
-      frequency: habit.frequency,
-
-      createdAt: habit.createdAt,
-      selectedDateKey,
-
-      selectedDays: habit.selectedDays,
-      dayOfMonth: habit.dayOfMonth,
-      monthOfYear: habit.monthOfYear,
-
-      selectedWeekDay: selectedDate.getDay(),
-      selectedDay: selectedDate.getDate(),
-      selectedMonth: selectedDate.getMonth() + 1,
-
-      createdCondition,
-      scheduledCondition,
-    });
-
     return createdCondition && scheduledCondition;
   });
   const { completedCount, progress, progressPercent } = getHabitStatistics(
@@ -209,8 +187,8 @@ export default function Index() {
             <SemiCircleProgress
               progress={progress}
               value={progressPercent}
-              label="for today"
-              caption="Progress"
+              label="за сегодня"
+              caption="Прогресс"
             />
           </View>
           <HomeDateSelector
