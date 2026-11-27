@@ -2,19 +2,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
-
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 export default function LoginScreen() {
   const { loginUser } = useAuth();
+  const { colors, darkTheme } = useTheme();
 
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -31,11 +32,7 @@ export default function LoginScreen() {
 
     try {
       setLoading(true);
-
       await loginUser(login.trim(), password);
-
-      // После успешного входа AuthNavigator
-      // автоматически откроет главный экран.
     } catch (err) {
       setError(err instanceof Error ? err.message : "Не удалось войти");
     } finally {
@@ -45,7 +42,11 @@ export default function LoginScreen() {
 
   return (
     <LinearGradient
-      colors={["#f8eeee", "#e2bfc0", "#f5d6d7"]}
+      colors={
+        darkTheme
+          ? ["#211C22", "#342B34", "#211C22"]
+          : ["#f8eeee", "#e2bfc0", "#f5d6d7"]
+      }
       style={styles.container}
     >
       <KeyboardAvoidingView
@@ -53,14 +54,26 @@ export default function LoginScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.content}>
-          <Text style={styles.title}>С возвращением!</Text>
-          <Text style={styles.subtitle}>Войдите в свой аккаунт Habitify</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            С возвращением!
+          </Text>
+
+          <Text style={[styles.subtitle, { color: colors.secondaryText }]}>
+            Войдите в свой аккаунт Habitify
+          </Text>
 
           <View style={styles.form}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  color: colors.text,
+                },
+              ]}
               placeholder="Логин"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.secondaryText}
               value={login}
               onChangeText={setLogin}
               autoCapitalize="none"
@@ -68,18 +81,33 @@ export default function LoginScreen() {
             />
 
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  color: colors.text,
+                },
+              ]}
               placeholder="Пароль"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.secondaryText}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
             />
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? (
+              <Text style={[styles.error, { color: colors.accent }]}>
+                {error}
+              </Text>
+            ) : null}
 
             <Pressable
-              style={[styles.button, loading && styles.buttonDisabled]}
+              style={[
+                styles.button,
+                { backgroundColor: colors.accent },
+                loading && styles.buttonDisabled,
+              ]}
               onPress={handleLogin}
               disabled={loading}
             >
@@ -89,10 +117,16 @@ export default function LoginScreen() {
             </Pressable>
 
             <View style={styles.registerRow}>
-              <Text style={styles.registerText}>Нет аккаунта?</Text>
+              <Text
+                style={[styles.registerText, { color: colors.secondaryText }]}
+              >
+                Нет аккаунта?
+              </Text>
 
               <Pressable onPress={() => router.push("/register")}>
-                <Text style={styles.registerLink}>Зарегистрироваться</Text>
+                <Text style={[styles.registerLink, { color: colors.accent }]}>
+                  Зарегистрироваться
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -116,12 +150,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "700",
-    color: "#292020",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#725e5e",
     marginBottom: 35,
   },
   form: {
@@ -129,21 +161,16 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 56,
-    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#ded3d3",
     borderRadius: 15,
     paddingHorizontal: 18,
     fontSize: 16,
-    color: "#292020",
   },
   error: {
-    color: "#b42318",
     fontSize: 14,
   },
   button: {
     height: 56,
-    backgroundColor: "#fff",
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
@@ -153,7 +180,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: "#d9655c",
+    color: "#FFFFFF",
     fontSize: 17,
     fontWeight: "700",
   },
@@ -166,11 +193,9 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   registerText: {
-    color: "#725e5e",
     fontSize: 14,
   },
   registerLink: {
-    color: "#c65353",
     fontSize: 14,
     fontWeight: "700",
   },

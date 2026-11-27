@@ -1,16 +1,22 @@
+import * as SecureStore from "expo-secure-store";
+import { useSQLiteContext } from "expo-sqlite";
 import React, {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-
-import { useSQLiteContext } from "expo-sqlite";
-
+import { AppState } from "react-native";
 import categories from "../../constants/categories";
 import type { Frequency, Habit } from "../../types/habit";
+import {
+  cancelDailyNotifications,
+  scheduleDailyNotifications,
+  sendCompletionNotification,
+} from "../services/notification";
 import { useAuth } from "./AuthContext";
 
 type HabitInput = {
@@ -29,7 +35,7 @@ type HabitsContextType = {
   habits: Habit[];
   loading: boolean;
 
-  loadHabits: () => Promise<void>;
+  loadHabits: () => Promise<Habit[]>;
   addHabit: (data: HabitInput) => Promise<void>;
   updateHabit: (id: number, data: HabitInput) => Promise<void>;
   deleteHabit: (id: number) => Promise<void>;
@@ -48,7 +54,7 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
 
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const appState = useRef(AppState.currentState);
   const ensureHabitColumns = async () => {
     const columns = await db.getAllAsync<{ name: string }>(
       "PRAGMA table_info(habits)",
@@ -111,10 +117,14 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
     return new Date(`${createdAt.slice(0, 10)}T00:00:00`);
   };
 
-  const loadHabits = useCallback(async () => {
+  const loadHabits = useCallback(async (): Promise<Habit[]> => {
     if (!user) {
       setHabits([]);
-      return;
+
+      // Отменяем уведомления предыдущего пользователя
+      await cancelDailyNotifications();
+
+      return [];
     }
 
     try {
@@ -195,6 +205,16 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
         JSON.stringify(loadedHabits, null, 2),
       );
       setHabits(loadedHabits);
+
+      // Обновляем уведомления, если пользователь их включил
+      const notificationsEnabled = await SecureStore.getItemAsync(
+        "notificationsEnabled",
+      );
+
+      if (notificationsEnabled === "true") {
+        await scheduleDailyNotifications(loadedHabits);
+      }
+      return loadedHabits;
     } catch (error) {
       console.error("Ошибка загрузки привычек:", error);
       throw error;
@@ -231,6 +251,29 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
 
     initialize();
   }, [loadHabits, authLoading, user]);
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      "change",
+      async (nextAppState) => {
+        const wasInBackground = appState.current?.match(/inactive|background/);
+
+        if (wasInBackground && nextAppState === "active") {
+          try {
+            await loadHabits();
+            console.log("Уведомления обновлены после возвращения в приложение");
+          } catch (error) {
+            console.error("Ошибка обновления уведомлений:", error);
+          }
+        }
+
+        appState.current = nextAppState;
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [loadHabits]);
 
   const addHabit = async (data: HabitInput) => {
     if (!user) {
@@ -345,44 +388,75 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
     if (!user) {
       throw new Error("Пользователь не авторизован");
     }
+
     try {
       const existingMarker = await db.getFirstAsync<{
         habit_id: number;
       }>(
         `SELECT habit_id
-         FROM markers
-         WHERE habit_id = ?
-           AND user_id = ?
-           AND marked_at = ?`,
+       FROM markers
+       WHERE habit_id = ?
+         AND user_id = ?
+         AND marked_at = ?`,
         id,
         user.id,
         date,
       );
 
       if (existingMarker) {
+        // Снимаем отметку
         await db.runAsync(
           `DELETE FROM markers
-           WHERE habit_id = ?
-             AND user_id = ?
-             AND marked_at = ?`,
+         WHERE habit_id = ?
+           AND user_id = ?
+           AND marked_at = ?`,
           id,
           user.id,
           date,
         );
       } else {
+        // Ставим отметку
         await db.runAsync(
           `INSERT INTO markers (
-            user_id,
-            habit_id,
-            marked_at
-          ) VALUES (?, ?, ?)`,
+          user_id,
+          habit_id,
+          marked_at
+        ) VALUES (?, ?, ?)`,
           user.id,
           id,
           date,
         );
       }
 
-      await loadHabits();
+      // Получаем обновлённый список привычек
+      const updatedHabits = await loadHabits();
+      console.log(
+        "Привычки после последней отметки:",
+        JSON.stringify(updatedHabits, null, 2),
+      );
+
+      // Проверяем, что отметка поставлена именно за сегодняшний день
+      const today = new Date();
+      const todayKey = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+      ].join("-");
+
+      // Поздравление отправляем только при установке отметки,
+      // а не при её снятии
+      const notificationsEnabled = await SecureStore.getItemAsync(
+        "notificationsEnabled",
+      );
+
+      if (
+        !existingMarker &&
+        date.slice(0, 10) === todayKey &&
+        notificationsEnabled === "true"
+      ) {
+        console.log("Пытаемся отправить поздравление");
+        await sendCompletionNotification(updatedHabits);
+      }
     } catch (error) {
       console.error("Ошибка изменения отметки:", error);
       throw error;

@@ -1,13 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { GlassView } from "expo-glass-effect";
-import { Image } from "expo-image";
 import React, { useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../src/context/ThemeContext";
+import AdaptiveGlassView from "./AdaptiveLiquidGlassView";
 
 type HomeHeaderProps = {
   firstName: string;
   lastName: string;
-  photoUri: string | null;
   onOpenCalendar: () => void;
   onLogout: () => void;
 };
@@ -15,11 +14,10 @@ type HomeHeaderProps = {
 export default function HomeHeader({
   firstName,
   lastName,
-  photoUri,
   onOpenCalendar,
   onLogout,
 }: HomeHeaderProps) {
-  const [hasPhotoLoadError, setHasPhotoLoadError] = useState(false);
+  const { colors, darkTheme } = useTheme();
   const [profileVisible, setProfileVisible] = useState(false);
 
   const initials =
@@ -33,6 +31,40 @@ export default function HomeHeader({
     setProfileVisible(false);
     onLogout();
   };
+  const profileContent = (
+    <>
+      <View
+        style={[styles.dragIndicator, { backgroundColor: colors.border }]}
+      />
+
+      <View style={styles.profileHeader}>
+        <Text style={[styles.profileName, { color: colors.text }]}>
+          {fullName || "Пользователь"}
+        </Text>
+
+        <Pressable onPress={() => setProfileVisible(false)} hitSlop={12}>
+          <Ionicons name="close" size={25} color={colors.secondaryText} />
+        </Pressable>
+      </View>
+
+      <View
+        style={[
+          styles.divider,
+          {
+            backgroundColor: darkTheme ? "#665563" : "#d9baba",
+          },
+        ]}
+      />
+
+      <Pressable style={styles.logoutButton} onPress={handleLogout}>
+        <Ionicons name="log-out-outline" size={21} color={colors.accent} />
+
+        <Text style={[styles.logoutText, { color: colors.accent }]}>
+          Выйти из аккаунта
+        </Text>
+      </Pressable>
+    </>
+  );
 
   return (
     <>
@@ -43,23 +75,15 @@ export default function HomeHeader({
           accessibilityRole="button"
           accessibilityLabel="Открыть профиль"
         >
-          <GlassView
-            style={styles.avatar}
+          <AdaptiveGlassView
+            style={[styles.avatar, { borderColor: colors.border }]}
             glassEffectStyle="clear"
             isInteractive
           >
-            {photoUri && !hasPhotoLoadError ? (
-              <Image
-                source={{ uri: photoUri }}
-                style={styles.avatarImage}
-                contentFit="cover"
-                accessibilityLabel={fullName}
-                onError={() => setHasPhotoLoadError(true)}
-              />
-            ) : (
-              <Text style={styles.avatarInitials}>{initials}</Text>
-            )}
-          </GlassView>
+            <Text style={[styles.avatarInitials, { color: colors.text }]}>
+              {initials}
+            </Text>
+          </AdaptiveGlassView>
         </Pressable>
 
         {/* Календарь */}
@@ -69,13 +93,13 @@ export default function HomeHeader({
           accessibilityRole="button"
           accessibilityLabel="Открыть календарь"
         >
-          <GlassView
-            style={styles.calendarButtonGlass}
+          <AdaptiveGlassView
+            style={[styles.calendarButtonGlass, { borderColor: colors.border }]}
             glassEffectStyle="clear"
             isInteractive
           >
-            <Ionicons name="calendar-outline" size={24} color="#1d1d1d" />
-          </GlassView>
+            <Ionicons name="calendar-outline" size={24} color={colors.text} />
+          </AdaptiveGlassView>
         </Pressable>
       </View>
 
@@ -95,32 +119,22 @@ export default function HomeHeader({
           />
 
           {/* Нижняя панель */}
-          <GlassView
-            style={styles.profileSheet}
+          <AdaptiveGlassView
+            style={[
+              styles.profileSheet,
+              {
+                borderColor: colors.border,
+              },
+            ]}
+            androidStyle={{
+              ...styles.androidProfileSheet,
+              backgroundColor: colors.card,
+            }}
             glassEffectStyle="regular"
             isInteractive
           >
-            <View style={styles.dragIndicator} />
-
-            <View style={styles.profileHeader}>
-              <Text style={styles.profileName}>
-                {fullName || "Пользователь"}
-              </Text>
-
-              <Pressable onPress={() => setProfileVisible(false)} hitSlop={12}>
-                <Ionicons name="close" size={25} color="#8b7777" />
-              </Pressable>
-            </View>
-
-            <View style={styles.divider} />
-
-            {/* Выход из аккаунта */}
-            <Pressable style={styles.logoutButton} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={21} color="#d9655c" />
-
-              <Text style={styles.logoutText}>Выйти из аккаунта</Text>
-            </Pressable>
-          </GlassView>
+            {profileContent}
+          </AdaptiveGlassView>
         </View>
       </Modal>
     </>
@@ -183,12 +197,18 @@ const styles = StyleSheet.create({
   },
 
   profileSheet: {
-    backgroundColor: "#fff7f6",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    overflow: "hidden",
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 38,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.4)",
+  },
+
+  androidProfileSheet: {
+    backgroundColor: "rgba(255,247,246,0.94)",
   },
 
   dragIndicator: {

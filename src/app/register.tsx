@@ -2,25 +2,25 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { register } = useAuth();
-
+  const { colors, darkTheme } = useTheme();
   const [surname, setSurname] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -81,7 +81,11 @@ export default function RegisterScreen() {
 
   return (
     <LinearGradient
-      colors={["#f8eeee", "#e2bfc0", "#f5d6d7"]}
+      colors={
+        darkTheme
+          ? ["#211C22", "#342B34", "#211C22"]
+          : ["#f8eeee", "#e2bfc0", "#f5d6d7"]
+      }
       locations={[0, 0.55, 1]}
       style={styles.gradient}
     >
@@ -95,56 +99,100 @@ export default function RegisterScreen() {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.scrollContent}
           >
-            <Text style={styles.title}>Регистрация</Text>
+            <Text style={[styles.title, { color: colors.text }]}>
+              Регистрация
+            </Text>
 
             <View style={styles.fields}>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
                 placeholder="Фамилия"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.secondaryText}
                 value={surname}
                 onChangeText={setSurname}
               />
 
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
                 placeholder="Имя"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.secondaryText}
                 value={name}
                 onChangeText={setName}
               />
 
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
                 placeholder="Возраст"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.secondaryText}
                 value={age}
                 onChangeText={setAge}
                 keyboardType="numeric"
               />
 
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
                 placeholder="Логин"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.secondaryText}
                 value={login}
                 onChangeText={setLogin}
                 autoCapitalize="none"
               />
 
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
                 placeholder="Пароль"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.secondaryText}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
               />
 
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
                 placeholder="Повторите пароль"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.secondaryText}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
@@ -154,12 +202,16 @@ export default function RegisterScreen() {
 
           <View style={styles.footer}>
             <Pressable
-              style={styles.registerButton}
+              style={[
+                styles.registerButton,
+                { backgroundColor: colors.accent },
+                loading && styles.buttonDisabled,
+              ]}
               onPress={handleRegister}
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#e34c4c" />
+                <ActivityIndicator color="#ffffff" />
               ) : (
                 <Text style={styles.buttonText}>Зарегистрироваться</Text>
               )}
@@ -169,8 +221,11 @@ export default function RegisterScreen() {
               onPress={() => router.replace("/login")}
               style={styles.loginLink}
             >
-              <Text style={styles.linkText}>
-                Уже есть аккаунт? <Text style={styles.linkAccent}>Войти</Text>
+              <Text style={[styles.linkText, { color: colors.secondaryText }]}>
+                Уже есть аккаунт?{" "}
+                <Text style={[styles.linkAccent, { color: colors.accent }]}>
+                  Войти
+                </Text>
               </Text>
             </Pressable>
           </View>
@@ -203,7 +258,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#171313",
     marginBottom: 16,
   },
 
@@ -213,13 +267,10 @@ const styles = StyleSheet.create({
 
   input: {
     height: 42,
-    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#c9bcbc",
     borderRadius: 9,
     paddingHorizontal: 12,
     fontSize: 13,
-    color: "#292222",
   },
 
   footer: {
@@ -229,14 +280,17 @@ const styles = StyleSheet.create({
 
   registerButton: {
     height: 44,
-    backgroundColor: "#ffffff",
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
   },
 
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+
   buttonText: {
-    color: "#e34c4c",
+    color: "#ffffff",
     fontSize: 13,
     fontWeight: "600",
   },
@@ -248,11 +302,9 @@ const styles = StyleSheet.create({
 
   linkText: {
     fontSize: 12,
-    color: "#514343",
   },
 
   linkAccent: {
-    color: "#d94f55",
     fontWeight: "700",
   },
 });

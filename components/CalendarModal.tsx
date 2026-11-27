@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import React from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import React, { useMemo } from "react";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../src/context/ThemeContext";
 
 type CalendarModalProps = {
   visible: boolean;
@@ -12,7 +12,7 @@ type CalendarModalProps = {
   onClose: () => void;
 };
 
-const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const weekDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 export default function CalendarModal({
   visible,
@@ -22,9 +22,10 @@ export default function CalendarModal({
   onSelectDate,
   onClose,
 }: CalendarModalProps) {
-  const monthLabel = calendarMonth.toLocaleDateString('ru-RU', {
-    month: 'long',
-    year: 'numeric',
+  const { colors, darkTheme } = useTheme();
+  const monthLabel = calendarMonth.toLocaleDateString("ru-RU", {
+    month: "long",
+    year: "numeric",
   });
 
   const calendarWeeks = useMemo(() => {
@@ -47,9 +48,8 @@ export default function CalendarModal({
       ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
     ];
 
-    return Array.from(
-      { length: Math.ceil(days.length / 7) },
-      (_, index) => days.slice(index * 7, index * 7 + 7),
+    return Array.from({ length: Math.ceil(days.length / 7) }, (_, index) =>
+      days.slice(index * 7, index * 7 + 7),
     );
   }, [calendarMonth]);
 
@@ -61,7 +61,16 @@ export default function CalendarModal({
       onRequestClose={onClose}
     >
       <View style={styles.modalBackdrop}>
-        <View style={styles.backgroundModal}>
+        <View
+          style={[
+            styles.backgroundModal,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderWidth: 1,
+            },
+          ]}
+        >
           <View style={styles.calendarHeader}>
             <Pressable
               onPress={() =>
@@ -77,10 +86,12 @@ export default function CalendarModal({
               accessibilityLabel="Предыдущий месяц"
               hitSlop={8}
             >
-              <Ionicons name="chevron-back" size={22} color="#1d1d1d" />
+              <Ionicons name="chevron-back" size={22} color={colors.text} />
             </Pressable>
 
-            <Text style={styles.calendarTitle}>{monthLabel}</Text>
+            <Text style={[styles.calendarTitle, { color: colors.text }]}>
+              {monthLabel}
+            </Text>
 
             <Pressable
               onPress={() =>
@@ -96,13 +107,16 @@ export default function CalendarModal({
               accessibilityLabel="Следующий месяц"
               hitSlop={8}
             >
-              <Ionicons name="chevron-forward" size={22} color="#1d1d1d" />
+              <Ionicons name="chevron-forward" size={22} color={colors.text} />
             </Pressable>
           </View>
 
           <View style={styles.calendarWeek}>
             {weekDays.map((day) => (
-              <Text key={day} style={styles.weekDay}>
+              <Text
+                key={day}
+                style={[styles.weekDay, { color: colors.secondaryText }]}
+              >
                 {day}
               </Text>
             ))}
@@ -145,13 +159,22 @@ export default function CalendarModal({
                     <View
                       style={[
                         styles.calendarDayCircle,
-                        isSelected && styles.calendarDaySelected,
+                        {
+                          backgroundColor: isSelected
+                            ? colors.accent
+                            : darkTheme
+                              ? "#403640"
+                              : "transparent",
+                        },
                       ]}
                     >
                       <Text
                         style={[
                           styles.calendarDayText,
-                          isSelected && styles.calendarDaySelectedText,
+                          {
+                            color: isSelected ? "#ffffff" : colors.text,
+                            fontWeight: isSelected ? "700" : "400",
+                          },
                         ]}
                       >
                         {day}
@@ -168,7 +191,9 @@ export default function CalendarModal({
             onPress={onClose}
             accessibilityRole="button"
           >
-            <Text style={styles.closeCalendarText}>Закрыть</Text>
+            <Text style={[styles.closeCalendarText, { color: colors.accent }]}>
+              Закрыть
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -179,87 +204,87 @@ export default function CalendarModal({
 const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
-    backgroundColor: 'rgba(29,29,29,0.35)',
+    backgroundColor: "rgba(29,29,29,0.35)",
   },
 
   backgroundModal: {
-    width: '100%',
+    width: "100%",
     maxWidth: 360,
     borderRadius: 24,
     padding: 20,
-    backgroundColor: '#fff7f6',
+    backgroundColor: "#fff7f6",
   },
 
   calendarHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 20,
   },
 
   calendarTitle: {
-    color: '#1d1d1d',
+    color: "#1d1d1d",
     fontSize: 18,
-    fontWeight: '700',
-    textTransform: 'capitalize',
+    fontWeight: "700",
+    textTransform: "capitalize",
   },
 
   calendarWeek: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
   },
 
   weekDay: {
-    width: '14.285%',
-    textAlign: 'center',
-    color: '#777',
+    width: "14.285%",
+    textAlign: "center",
+    color: "#777",
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
     paddingBottom: 8,
   },
 
   calendarDay: {
-    width: '14.285%',
+    width: "14.285%",
     height: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   calendarDayCircle: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   calendarDaySelected: {
-    backgroundColor: '#d9655c',
+    backgroundColor: "#d9655c",
   },
 
   calendarDayText: {
-    color: '#1d1d1d',
+    color: "#1d1d1d",
     fontSize: 15,
   },
 
   calendarDaySelectedText: {
-    color: '#fff',
-    fontWeight: '700',
+    color: "#fff",
+    fontWeight: "700",
   },
 
   closeCalendarButton: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginTop: 16,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
 
   closeCalendarText: {
-    color: '#b94f48',
+    color: "#b94f48",
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

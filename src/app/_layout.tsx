@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { HabitsProvider } from "../context/HabitsContext";
+import { ThemeProvider } from "../context/ThemeContext";
 import { initializeDatabase } from "../database/database";
 
 // Компонент проверки авторизации и маршрутизации
@@ -73,11 +74,13 @@ export default function RootLayout() {
         }}
         onInit={initializeDatabase}
       >
-        <AuthProvider>
-          <HabitsProvider>
-            <AuthNavigator />
-          </HabitsProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <HabitsProvider>
+              <AuthNavigator />
+            </HabitsProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </SQLiteProvider>
     </GestureHandlerRootView>
   );

@@ -1,49 +1,27 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import {
-  Alert,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AddHabitModal from "../../../components/AddHabitModal";
 import CalendarModal from "../../../components/CalendarModal";
+import HomeAddButton from "../../../components/HomeAddButton";
+import HomeDateSelector from "../../../components/HomeDateSelector";
+import HomeHabitsList from "../../../components/HomeHabitsList";
 import HomeHeader from "../../../components/HomeHeader";
-import ListEmptyComponent from "../../../components/ListEmptyComponent";
 import SemiCircleProgress from "../../../components/SemiCircleProgress";
-import SwipeableHabitCard from "../../../components/SwipeableHabitCard";
 import categories from "../../../constants/categories";
 import type { Frequency, Habit } from "../../../types/habit";
 import { useAuth } from "../../context/AuthContext";
 import { useHabits } from "../../context/HabitsContext";
-
-type AccountProfile = {
-  firstName: string;
-  lastName: string;
-  photoUri: string | null;
-};
-
-const account: AccountProfile = {
-  firstName: "Name",
-  lastName: "Surname",
-  photoUri: null,
-};
-
-const getDateKey = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
+import { useTheme } from "../../context/ThemeContext";
+import { getDateKey } from "../../utils/dateUtils";
+import { isHabitScheduled } from "../../utils/habitSchedule";
+import { getHabitStatistics } from "../../utils/habitStatistics";
 
 export default function Index() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const { darkTheme, colors } = useTheme();
   const context = useHabits();
   console.log("Habit context:", context);
   const { habits, addHabit, updateHabit, deleteHabit, toggleHabit } = context;
@@ -143,37 +121,7 @@ export default function Index() {
       Alert.alert("Ошибка", "Не удалось сохранить привычку");
     }
   };
-  const isHabitScheduled = (habit: Habit, date: Date) => {
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    const weekDay = date.getDay();
 
-    switch (habit.frequency) {
-      case "daily":
-        return true;
-
-      case "weekly":
-        return habit.selectedDays?.includes(weekDay) ?? false;
-
-      case "monthly": {
-        const lastDay = new Date(
-          date.getFullYear(),
-          date.getMonth() + 1,
-          0,
-        ).getDate();
-
-        const targetDay = Math.min(habit.dayOfMonth ?? 1, lastDay);
-
-        return day === targetDay;
-      }
-
-      case "yearly":
-        return day === habit.dayOfMonth && month === habit.monthOfYear;
-
-      default:
-        return false;
-    }
-  };
   const handleToggleHabit = async (id: number) => {
     try {
       await toggleHabit(id, selectedDateKey);
@@ -229,23 +177,31 @@ export default function Index() {
 
     return createdCondition && scheduledCondition;
   });
-  const completedCount = visibleHabits.filter((habit) =>
-    habit.completedDates.includes(selectedDateKey),
-  ).length;
-  const progress =
-    visibleHabits.length > 0 ? completedCount / visibleHabits.length : 0;
-
-  const progressPercent = Math.round(progress * 100);
-
+  const { completedCount, progress, progressPercent } = getHabitStatistics(
+    visibleHabits,
+    selectedDateKey,
+  );
   return (
-    <LinearGradient colors={["#f9d9d9", "#ebc0c4"]} style={styles.gradient}>
-      <View style={styles.pattern} pointerEvents="none" />
+    <LinearGradient
+      colors={[colors.background, colors.background]}
+      style={styles.gradient}
+    >
+      <View
+        style={[
+          styles.pattern,
+          {
+            backgroundColor: darkTheme
+              ? "rgba(255,255,255,0.025)"
+              : "rgba(255,255,255,0.08)",
+          },
+        ]}
+        pointerEvents="none"
+      />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <HomeHeader
-            firstName={account.firstName}
-            lastName={account.lastName}
-            photoUri={account.photoUri}
+            firstName={user?.name ?? ""}
+            lastName={user?.surname ?? ""}
             onOpenCalendar={openCalendar}
             onLogout={logout}
           />
@@ -257,60 +213,28 @@ export default function Index() {
               caption="Progress"
             />
           </View>
-          <View style={styles.dateRow}>
-            <Pressable
-              onPress={() => moveSelectedDate(-1)}
-              accessibilityRole="button"
-              accessibilityLabel="Предыдущий день"
-              hitSlop={8}
-            >
-              <Text style={styles.arrow}>{"<"}</Text>
-            </Pressable>
-            <Pressable onPress={openCalendar} hitSlop={10}>
-              <Text style={styles.dateLabel}>{selectedDateLabel}</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => moveSelectedDate(1)}
-              accessibilityRole="button"
-              accessibilityLabel="Следующий день"
-              hitSlop={8}
-            >
-              <Text style={styles.arrow}>{">"}</Text>
-            </Pressable>
-          </View>
-          <FlatList
-            data={visibleHabits}
-            keyExtractor={(habit) => String(habit.id)}
-            style={styles.list}
-            renderItem={({ item: habit }) => (
-              <SwipeableHabitCard
-                habit={habit}
-                checked={habit.completedDates.includes(selectedDateKey)}
-                onToggle={handleToggleHabit}
-                onDelete={handleDeleteHabit}
-                onEdit={startEditHabit}
-                onPressDetails={() =>
-                  router.push({
-                    pathname: "/habit/[id]",
-                    params: { id: String(habit.id) },
-                  })
-                }
-              />
-            )}
-            ListEmptyComponent={
-              <ListEmptyComponent onAddHabit={openAddHabitModal} />
-            }
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={visibleHabits.length > 0}
+          <HomeDateSelector
+            dateLabel={selectedDateLabel}
+            textColor={colors.text}
+            onPrevious={() => moveSelectedDate(-1)}
+            onNext={() => moveSelectedDate(1)}
+            onOpenCalendar={openCalendar}
           />
-          <TouchableOpacity
-            style={styles.fab}
-            activeOpacity={0.9}
-            onPress={openAddHabitModal}
-          >
-            <Text style={styles.fabText}>+</Text>
-          </TouchableOpacity>
+          <HomeHabitsList
+            habits={visibleHabits}
+            selectedDateKey={selectedDateKey}
+            onToggle={handleToggleHabit}
+            onDelete={handleDeleteHabit}
+            onEdit={startEditHabit}
+            onPressDetails={(habit) =>
+              router.push({
+                pathname: "/habit/[id]",
+                params: { id: String(habit.id) },
+              })
+            }
+            onAddHabit={openAddHabitModal}
+          />
+          <HomeAddButton onPress={openAddHabitModal} />
         </View>
       </SafeAreaView>
       <CalendarModal
@@ -378,58 +302,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
     marginBottom: 12,
-  },
-
-  dateRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-
-  arrow: {
-    fontSize: 28,
-    color: "#1c1c1c",
-    lineHeight: 28,
-    fontWeight: "300",
-    opacity: 0.8,
-  },
-
-  dateLabel: {
-    fontSize: 20,
-    color: "#1b1b1b",
-    fontWeight: "600",
-    letterSpacing: 0.2,
-    textTransform: "capitalize",
-  },
-
-  list: {
-    marginTop: 8,
-  },
-
-  fab: {
-    position: "absolute",
-    right: 30,
-    bottom: 22,
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    backgroundColor: "#d9655c",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000000",
-    shadowOpacity: 0.22,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 14,
-    elevation: 6,
-  },
-
-  fabText: {
-    color: "#fff",
-    fontSize: 52,
-    lineHeight: 55,
-    fontWeight: "300",
   },
 });

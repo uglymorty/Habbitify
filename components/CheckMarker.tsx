@@ -1,5 +1,6 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import React from "react";
+import { Pressable, StyleSheet, Text } from "react-native";
+import { useTheme } from "../src/context/ThemeContext";
 
 type CheckMarkerProps = {
   checked: boolean;
@@ -7,45 +8,61 @@ type CheckMarkerProps = {
 };
 
 export default function CheckMarker({ checked, onPress }: CheckMarkerProps) {
+  const { darkTheme, colors } = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
-      style={checked ? styles.checkFilled: styles.checkEmpty}
+      style={[
+        styles.check,
+        {
+          backgroundColor: checked
+            ? darkTheme
+              ? colors.accent
+              : "#1d1d1d"
+            : darkTheme
+              ? "rgba(255,255,255,0.06)"
+              : "rgba(255,255,255,0.18)",
+
+          borderColor: checked
+            ? darkTheme
+              ? colors.accent
+              : "#1d1d1d"
+            : colors.border,
+        },
+      ]}
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
       accessibilityLabel="Отметить привычку выполненной"
     >
-      {checked ? <Text style={styles.checkMark}>✓</Text>: null}
+      {checked ? (
+        <Text
+          style={[
+            styles.checkMark,
+            {
+              color: darkTheme ? "#FFFFFF" : "#f6dfe1",
+            },
+          ]}
+        >
+          ✓
+        </Text>
+      ) : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  checkEmpty: {
+  check: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.18)',
     borderWidth: 1.5,
-    borderColor: 'rgba(28,28,28,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  checkFilled: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#1d1d1d',
-    borderWidth: 1.5,
-    borderColor: '#1d1d1d',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   checkMark: {
-    color: '#f6dfe1',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

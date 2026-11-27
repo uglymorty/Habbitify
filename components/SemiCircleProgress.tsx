@@ -1,6 +1,8 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
+import { useTheme } from "../src/context/ThemeContext";
+
 type SemiCircleProgressProps = {
   progress: number;
   value: number;
@@ -12,7 +14,7 @@ export default function SemiCircleProgress({
   progress,
   value,
   label,
-  caption = '',
+  caption = "",
 }: SemiCircleProgressProps) {
   const width = 300;
   const height = 180;
@@ -21,6 +23,7 @@ export default function SemiCircleProgress({
   const centerY = height - 12;
   const arcLength = Math.PI * radius;
   const progressLength = arcLength * Math.min(Math.max(progress, 0), 1);
+  const { colors, darkTheme } = useTheme();
 
   return (
     <View style={styles.container}>
@@ -35,7 +38,7 @@ export default function SemiCircleProgress({
         <Path
           d={`M ${strokeWidth / 2} ${centerY}
               A ${radius} ${radius} 0 0 1 ${width - strokeWidth / 2} ${centerY}`}
-          stroke="rgba(29, 42, 35, 0.14)"
+          stroke={darkTheme ? "rgba(255,255,255,0.14)" : "rgba(29,42,35,0.14)"}
           strokeWidth={strokeWidth}
           fill="none"
           strokeLinecap="round"
@@ -54,9 +57,15 @@ export default function SemiCircleProgress({
       </Svg>
 
       <View style={styles.centerText}>
-        {caption ? <Text style={styles.caption}>{caption}</Text> : null}
-        <Text style={styles.value}>{value}%</Text>
-        <Text style={styles.label}>{label}</Text>
+        {caption ? (
+          <Text style={[styles.caption, { color: colors.secondaryText }]}>
+            {caption}
+          </Text>
+        ) : null}
+
+        <Text style={[styles.value, { color: colors.text }]}>{value}%</Text>
+
+        <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
       </View>
     </View>
   );
@@ -66,30 +75,30 @@ const styles = StyleSheet.create({
   container: {
     width: 300,
     height: 190,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    alignItems: "center",
+    justifyContent: "flex-start",
   },
   centerText: {
-    position: 'absolute',
+    position: "absolute",
     top: 84,
-    alignItems: 'center',
+    alignItems: "center",
   },
   caption: {
     fontSize: 12,
-    color: '#1d2a23',
+    color: "#1d2a23",
     marginBottom: 2,
     opacity: 0.8,
   },
   value: {
     fontSize: 46,
     lineHeight: 52,
-    fontWeight: '700',
-    color: '#1d1d1f',
+    fontWeight: "700",
+    color: "#1d1d1f",
   },
   label: {
     fontSize: 18,
-    color: '#232323',
-    fontWeight: '500',
-    textTransform: 'lowercase',
+    color: "#232323",
+    fontWeight: "500",
+    textTransform: "lowercase",
   },
 });

@@ -1,5 +1,6 @@
-import React from 'react';
-import { Dropdown } from 'react-native-element-dropdown';
+import React from "react";
+import { Dropdown } from "react-native-element-dropdown";
+import { useTheme } from "../src/context/ThemeContext";
 
 import {
   Keyboard,
@@ -9,9 +10,9 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
+} from "react-native";
 
-import type { Frequency } from '../types/habit';
+import type { Frequency } from "../types/habit";
 
 type Category = {
   label: string;
@@ -49,35 +50,35 @@ type AddHabitModalProps = {
 };
 
 const frequencyOptions = [
-  { label: 'Каждый день', value: 'daily' },
-  { label: 'Каждую неделю', value: 'weekly' },
-  { label: 'Каждый месяц', value: 'monthly' },
-  { label: 'Каждый год', value: 'yearly' },
+  { label: "Каждый день", value: "daily" },
+  { label: "Каждую неделю", value: "weekly" },
+  { label: "Каждый месяц", value: "monthly" },
+  { label: "Каждый год", value: "yearly" },
 ];
 
 const weekdays = [
-  { label: 'Пн', value: 1 },
-  { label: 'Вт', value: 2 },
-  { label: 'Ср', value: 3 },
-  { label: 'Чт', value: 4 },
-  { label: 'Пт', value: 5 },
-  { label: 'Сб', value: 6 },
-  { label: 'Вс', value: 0 },
+  { label: "Пн", value: 1 },
+  { label: "Вт", value: 2 },
+  { label: "Ср", value: 3 },
+  { label: "Чт", value: 4 },
+  { label: "Пт", value: 5 },
+  { label: "Сб", value: 6 },
+  { label: "Вс", value: 0 },
 ];
 
 const months = [
-  'Январь',
-  'Февраль',
-  'Март',
-  'Апрель',
-  'Май',
-  'Июнь',
-  'Июль',
-  'Август',
-  'Сентябрь',
-  'Октябрь',
-  'Ноябрь',
-  'Декабрь',
+  "Январь",
+  "Февраль",
+  "Март",
+  "Апрель",
+  "Май",
+  "Июнь",
+  "Июль",
+  "Август",
+  "Сентябрь",
+  "Октябрь",
+  "Ноябрь",
+  "Декабрь",
 ].map((label, index) => ({
   label,
   value: index + 1,
@@ -109,11 +110,10 @@ export default function AddHabitModal({
   description,
   onChangeDescription,
 }: AddHabitModalProps) {
+  const { colors, darkTheme } = useTheme();
   const toggleWeekday = (day: number) => {
     if (selectedDays.includes(day)) {
-      onChangeSelectedDays(
-        selectedDays.filter((item) => item !== day)
-      );
+      onChangeSelectedDays(selectedDays.filter((item) => item !== day));
     } else {
       onChangeSelectedDays([...selectedDays, day]);
     }
@@ -126,31 +126,52 @@ export default function AddHabitModal({
       animationType="fade"
       onRequestClose={onCancel}
     >
-      <Pressable
-        style={styles.modalBackdrop}
-        onPress={Keyboard.dismiss}
-      >
-        <View style={styles.backgroundModal}>
-          <Text style={styles.addModalTitle}>
-            {isEditing ? 'Редактировать привычку' : 'Новая привычка'}
+      <Pressable style={styles.modalBackdrop} onPress={Keyboard.dismiss}>
+        <View
+          style={[
+            styles.backgroundModal,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderWidth: 1,
+            },
+          ]}
+        >
+          <Text style={[styles.addModalTitle, { color: colors.text }]}>
+            {isEditing ? "Редактировать привычку" : "Новая привычка"}
           </Text>
 
           {/* Название привычки */}
 
           <TextInput
             placeholder="Введите привычку"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.secondaryText}
             value={habitName}
             onChangeText={onChangeName}
-            style={styles.habitInput}
+            style={[
+              styles.habitInput,
+              {
+                backgroundColor: darkTheme ? "#403640" : "#ffffff",
+                borderColor: colors.border,
+                color: colors.text,
+              },
+            ]}
           />
 
           <TextInput
             placeholder="Добавьте описание привычки"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.secondaryText}
             value={description}
             onChangeText={onChangeDescription}
-            style={[styles.habitInput, styles.descriptionInput]}
+            style={[
+              styles.habitInput,
+              styles.descriptionInput,
+              {
+                backgroundColor: darkTheme ? "#403640" : "#ffffff",
+                borderColor: colors.border,
+                color: colors.text,
+              },
+            ]}
             multiline
             textAlignVertical="top"
           />
@@ -158,9 +179,29 @@ export default function AddHabitModal({
           {/* Категория */}
 
           <Dropdown
-            style={styles.dropdown}
-            placeholderStyle={styles.placeholderStyle}
-            selectedTextStyle={styles.selectedTextStyle}
+            style={[
+              styles.dropdown,
+              {
+                backgroundColor: darkTheme ? "#403640" : "#ffffff",
+                borderColor: colors.border,
+              },
+            ]}
+            placeholderStyle={[
+              styles.placeholderStyle,
+              { color: colors.secondaryText },
+            ]}
+            selectedTextStyle={[
+              styles.selectedTextStyle,
+              { color: colors.text },
+            ]}
+            containerStyle={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}
+            itemTextStyle={{
+              color: colors.text,
+            }}
+            activeColor={darkTheme ? "#51404f" : "#f0dddd"}
             data={categories}
             labelField="label"
             valueField="value"
@@ -171,27 +212,47 @@ export default function AddHabitModal({
 
           {/* Периодичность */}
 
-          <Text style={styles.fieldTitle}>Периодичность</Text>
+          <Text style={[styles.fieldTitle, { color: colors.accent }]}>
+            Периодичность
+          </Text>
 
           <Dropdown
-            style={styles.dropdown}
-            placeholderStyle={styles.placeholderStyle}
-            selectedTextStyle={styles.selectedTextStyle}
+            style={[
+              styles.dropdown,
+              {
+                backgroundColor: darkTheme ? "#403640" : "#ffffff",
+                borderColor: colors.border,
+              },
+            ]}
+            placeholderStyle={[
+              styles.placeholderStyle,
+              { color: colors.secondaryText },
+            ]}
+            selectedTextStyle={[
+              styles.selectedTextStyle,
+              { color: colors.text },
+            ]}
+            containerStyle={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}
+            itemTextStyle={{
+              color: colors.text,
+            }}
+            activeColor={darkTheme ? "#51404f" : "#f0dddd"}
             data={frequencyOptions}
             labelField="label"
             valueField="value"
             placeholder="Выберите периодичность"
             value={frequency}
-            onChange={(item) =>
-              onChangeFrequency(item.value as Frequency)
-            }
+            onChange={(item) => onChangeFrequency(item.value as Frequency)}
           />
 
           {/* Выбор дней недели */}
 
-          {frequency === 'weekly' && (
+          {frequency === "weekly" && (
             <View style={styles.frequencySection}>
-              <Text style={styles.fieldTitle}>
+              <Text style={[styles.fieldTitle, { color: colors.text }]}>
                 Выберите дни недели
               </Text>
 
@@ -204,14 +265,24 @@ export default function AddHabitModal({
                       key={day.value}
                       style={[
                         styles.weekdayButton,
-                        isSelected && styles.weekdayButtonActive,
+                        {
+                          backgroundColor: isSelected
+                            ? colors.accent
+                            : darkTheme
+                              ? "#403640"
+                              : "#f0dddd",
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                        },
                       ]}
                       onPress={() => toggleWeekday(day.value)}
                     >
                       <Text
                         style={[
                           styles.weekdayText,
-                          isSelected && styles.weekdayTextActive,
+                          {
+                            color: isSelected ? "#ffffff" : colors.text,
+                          },
                         ]}
                       >
                         {day.label}
@@ -225,16 +296,36 @@ export default function AddHabitModal({
 
           {/* Выбор числа месяца */}
 
-          {frequency === 'monthly' && (
+          {frequency === "monthly" && (
             <View style={styles.frequencySection}>
-              <Text style={styles.fieldTitle}>
+              <Text style={[styles.fieldTitle, { color: colors.accent }]}>
                 Число месяца
               </Text>
 
               <Dropdown
-                style={styles.dropdown}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
+                style={[
+                  styles.dropdown,
+                  {
+                    backgroundColor: darkTheme ? "#403640" : "#ffffff",
+                    borderColor: colors.border,
+                  },
+                ]}
+                placeholderStyle={[
+                  styles.placeholderStyle,
+                  { color: colors.secondaryText },
+                ]}
+                selectedTextStyle={[
+                  styles.selectedTextStyle,
+                  { color: colors.text },
+                ]}
+                containerStyle={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                }}
+                itemTextStyle={{
+                  color: colors.text,
+                }}
+                activeColor={darkTheme ? "#51404f" : "#f0dddd"}
                 data={days}
                 labelField="label"
                 valueField="value"
@@ -247,14 +338,34 @@ export default function AddHabitModal({
 
           {/* Выбор месяца и числа для ежегодной привычки */}
 
-          {frequency === 'yearly' && (
+          {frequency === "yearly" && (
             <View style={styles.frequencySection}>
               <Text style={styles.fieldTitle}>Месяц</Text>
 
               <Dropdown
-                style={styles.dropdown}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
+                style={[
+                  styles.dropdown,
+                  {
+                    backgroundColor: darkTheme ? "#403640" : "#ffffff",
+                    borderColor: colors.border,
+                  },
+                ]}
+                placeholderStyle={[
+                  styles.placeholderStyle,
+                  { color: colors.secondaryText },
+                ]}
+                selectedTextStyle={[
+                  styles.selectedTextStyle,
+                  { color: colors.text },
+                ]}
+                containerStyle={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                }}
+                itemTextStyle={{
+                  color: colors.text,
+                }}
+                activeColor={darkTheme ? "#51404f" : "#f0dddd"}
                 data={months}
                 labelField="label"
                 valueField="value"
@@ -266,9 +377,29 @@ export default function AddHabitModal({
               <Text style={styles.fieldTitle}>Число</Text>
 
               <Dropdown
-                style={styles.dropdown}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
+                style={[
+                  styles.dropdown,
+                  {
+                    backgroundColor: darkTheme ? "#403640" : "#ffffff",
+                    borderColor: colors.border,
+                  },
+                ]}
+                placeholderStyle={[
+                  styles.placeholderStyle,
+                  { color: colors.secondaryText },
+                ]}
+                selectedTextStyle={[
+                  styles.selectedTextStyle,
+                  { color: colors.text },
+                ]}
+                containerStyle={{
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                }}
+                itemTextStyle={{
+                  color: colors.text,
+                }}
+                activeColor={darkTheme ? "#51404f" : "#f0dddd"}
                 data={days}
                 labelField="label"
                 valueField="value"
@@ -283,18 +414,23 @@ export default function AddHabitModal({
 
           <View style={styles.addModalButtons}>
             <Pressable
-              style={styles.cancelButton}
+              style={[
+                styles.cancelButton,
+                { backgroundColor: darkTheme ? "#403640" : "#f0dddd" },
+              ]}
               onPress={onCancel}
             >
-              <Text style={styles.cancelButtonText}>Отмена</Text>
+              <Text style={[styles.cancelButtonText, { color: colors.text }]}>
+                Отмена
+              </Text>
             </Pressable>
 
             <Pressable
-              style={styles.addButton}
+              style={[styles.addButton, { backgroundColor: colors.accent }]}
               onPress={onAdd}
             >
               <Text style={styles.addButtonText}>
-                {isEditing ? 'Сохранить' : 'Добавить'}
+                {isEditing ? "Сохранить" : "Добавить"}
               </Text>
             </Pressable>
           </View>
@@ -307,65 +443,65 @@ export default function AddHabitModal({
 const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
-    backgroundColor: 'rgba(29,29,29,0.35)',
+    backgroundColor: "rgba(29,29,29,0.35)",
   },
 
   backgroundModal: {
-    width: '100%',
+    width: "100%",
     maxWidth: 360,
-    maxHeight: '90%',
+    maxHeight: "90%",
     borderRadius: 24,
     padding: 20,
-    backgroundColor: '#fff7f6',
+    backgroundColor: "#fff7f6",
   },
 
   addModalTitle: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#1d1d1d',
+    fontWeight: "700",
+    color: "#1d1d1d",
     marginBottom: 18,
   },
 
   habitInput: {
     height: 52,
     borderWidth: 1,
-    borderColor: '#e0c5c5',
+    borderColor: "#e0c5c5",
     borderRadius: 14,
     paddingHorizontal: 14,
     fontSize: 16,
-    color: '#1d1d1d',
-    backgroundColor: '#ffffff',
+    color: "#1d1d1d",
+    backgroundColor: "#ffffff",
   },
 
   fieldTitle: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#803f3b',
+    fontWeight: "600",
+    color: "#803f3b",
     marginTop: 15,
     marginBottom: 8,
   },
 
   dropdown: {
     height: 50,
-    borderColor: '#e0c5c5',
+    borderColor: "#e0c5c5",
     borderWidth: 1,
     borderRadius: 14,
     paddingHorizontal: 12,
     marginTop: 15,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
 
   placeholderStyle: {
     fontSize: 16,
-    color: '#999',
+    color: "#999",
   },
 
   selectedTextStyle: {
     fontSize: 16,
-    color: '#1d1d1d',
+    color: "#1d1d1d",
   },
 
   frequencySection: {
@@ -373,8 +509,8 @@ const styles = StyleSheet.create({
   },
 
   weekdaysContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 5,
   },
 
@@ -382,28 +518,28 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#f0dddd',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#f0dddd",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   weekdayButtonActive: {
-    backgroundColor: '#d9655c',
+    backgroundColor: "#d9655c",
   },
 
   weekdayText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#803f3b',
+    fontWeight: "600",
+    color: "#803f3b",
   },
 
   weekdayTextActive: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
 
   addModalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
     gap: 12,
   },
@@ -412,34 +548,34 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#f0dddd',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#f0dddd",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   cancelButtonText: {
-    color: '#803f3b',
+    color: "#803f3b",
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   addButton: {
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#d9655c',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#d9655c",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   addButtonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   descriptionInput: {
-  height: 90,
-  paddingTop: 14,
-  marginTop: 14,
-},
+    height: 90,
+    paddingTop: 14,
+    marginTop: 14,
+  },
 });
